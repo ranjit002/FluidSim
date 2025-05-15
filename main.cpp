@@ -1,6 +1,5 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <random>
 
 #include "globals.hpp"
 #include "Ensemble.hpp"
@@ -18,9 +17,12 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int num_particles = 7000;
-    Ensemble ensemble(num_particles);
+    int num_particles = 10000;
+    float radius = 2.0f;
+    Ensemble ensemble(num_particles, radius);
     
+    ensemble.set_acceleration(GRAVITY);
+
     while (window.isOpen()) {
 
         while (const std::optional event = window.pollEvent()) {
@@ -30,7 +32,6 @@ int main() {
         }
         window.clear();
 
-        ensemble.set_acceleration(GRAVITY);
         ensemble.border_collision();
         ensemble.collideParticles();
         ensemble.update(DT);
