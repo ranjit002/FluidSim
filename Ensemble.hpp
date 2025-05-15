@@ -75,7 +75,7 @@ struct Ensemble {
         return static_cast<int>(position.y / cellSize);
     }
 
-    size_t get_grid_index(int col, int row) const {
+    size_t get_grid_index(int row, int col) const {
         return row * gridCols + col;
     }
 
@@ -90,7 +90,7 @@ struct Ensemble {
             auto& position = positions[i];
             int row = get_grid_row(position);
             int col = get_grid_col(position);
-            int cell_index = get_grid_index(col, row);
+            int cell_index = get_grid_index(row, col);
 
             if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
                 grid[cell_index].push_back(i);
@@ -193,34 +193,40 @@ struct Ensemble {
 
 
     void collideParticles() {
-        // Iterate over cells
+
         #pragma omp parallel for collapse(2) schedule(dynamic)
         for (int row = 0; row < gridRows; ++row) {
             for (int col = 0; col < gridCols; ++col) {
                 
-                int cell_index = get_grid_index(col, row);
+                int cell_index = get_grid_index(row, col);
                 const auto& cell = grid[cell_index];
 
-                // Iterate over the same cell
-                for (size_t i = 0; i < cell.size(); i++) {
-                    for (size_t j = i + 1; j < cell.size(); j++) {
+                // Collisions within the same cell
+                for (size_t i = 0; i < cell.size(); ++i) {
+                    for (size_t j = i + 1; j < cell.size(); ++j) {
                         handleCollision(cell[i], cell[j]);
                     }
                 }
 
-                // Iterate over neighouring cells
-                for (int drow = -1; drow <= 1 ; drow++) {
-                    for (int dcol = -1; dcol <= 1 ; dcol++) {
+                // Collisions with neighboring cells (only forward neighbors)
+                for (int drow = -1; drow <= 1; ++drow) {
+                    for (int dcol = -1; dcol <= 1; ++dcol) {
                         if (drow == 0 && dcol == 0) continue;
 
                         int neighbour_row = row + drow;
                         int neighbour_col = col + dcol;
-                        // Avoid repeat calculations
-                        if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols) continue;
 
-                        int neighbour_index = get_grid_index(neighbour_col, neighbour_row);
+                        // Boundary check
+                        if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols)
+                            continue;
+
+                        // Only process neighbor if it is "after" current cell to avoid duplicates
+                        if (neighbour_row < row || (neighbour_row == row && neighbour_col <= col))
+                            continue;
+
+                        int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
                         const auto& neighbour_cell = grid[neighbour_index];
-                        
+
                         for (auto& i : cell) {
                             for (auto& j : neighbour_cell) {
                                 handleCollision(i, j);
@@ -231,6 +237,7 @@ struct Ensemble {
             }
         }
     }
+
   
     void set_acceleration(sf::Vector2f a) {
     
