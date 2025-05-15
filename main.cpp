@@ -17,11 +17,11 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int num_particles = 10000;
+    int numParticles = 10000;
     float radius = 2.0f;
-    Ensemble ensemble(num_particles, radius);
+    Ensemble ensemble(numParticles, radius);
     
-    ensemble.set_acceleration(GRAVITY);
+    ensemble.setAcceleration(GRAVITY);
 
     while (window.isOpen()) {
 

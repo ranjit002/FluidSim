@@ -30,16 +30,16 @@ struct Ensemble {
     int gridCols, gridRows;
 
     
-    Ensemble(int num_particles, float radius) {
+    Ensemble(int numParticles, float radius) {
 
         float mass = 1.0f;
         
         // Reserve memory for particle properties
-        positions.reserve(num_particles);
-        velocities.reserve(num_particles);
-        accelerations.reserve(num_particles);
-        radii.reserve(num_particles);
-        masses.reserve(num_particles);
+        positions.reserve(numParticles);
+        velocities.reserve(numParticles);
+        accelerations.reserve(numParticles);
+        radii.reserve(numParticles);
+        masses.reserve(numParticles);
 
         // Random setup
         std::random_device rd;
@@ -50,7 +50,7 @@ struct Ensemble {
         std::uniform_real_distribution<float> distPosY(10 * WINDOW_HEIGHT / 100, 20 * WINDOW_HEIGHT / 100);
         std::uniform_real_distribution<float> distVel(-50.0f, 50.0f);
 
-        for (int i = 0; i < num_particles; ++i) {
+        for (int i = 0; i < numParticles; ++i) {
             positions.emplace_back(distPosX(gen), distPosY(gen));
             velocities.emplace_back(distVel(gen), distVel(gen));
             accelerations.emplace_back(0.f, 0.f);  // Initially zero
@@ -59,42 +59,42 @@ struct Ensemble {
         }
 
         // Setup collision grid
-        float max_radius = *std::max_element(radii.begin(), radii.end());
-        cellSize = 2.0f * max_radius;
+        float maxRadius = *std::max_element(radii.begin(), radii.end());
+        cellSize = 2.0f * maxRadius;
         gridCols = static_cast<int>(WINDOW_WIDTH / cellSize) + 1;
         gridRows = static_cast<int>(WINDOW_HEIGHT / cellSize) + 1;
         
         grid.resize(gridCols * gridRows);
-        populate_grid();
+        populateGrid();
     }
 
-    int get_grid_col(const sf::Vector2f& position) const {
+    int getGridCol(const sf::Vector2f& position) const {
         return static_cast<int>(position.x / cellSize);
     }
 
-    int get_grid_row(const sf::Vector2f& position) const {
+    int getGridRow(const sf::Vector2f& position) const {
         return static_cast<int>(position.y / cellSize);
     }
 
-    size_t get_grid_index(int row, int col) const {
+    size_t getGridIndex(int row, int col) const {
         return row * gridCols + col;
     }
 
-    void clear_grid() {
+    void clearGrid() {
         for (auto& cell : grid) cell.clear();
     }
 
-    void populate_grid() {
-        clear_grid();
+    void populateGrid() {
+        clearGrid();
 
         for (size_t i = 0; i < positions.size(); i++) {
             auto& position = positions[i];
-            int row = get_grid_row(position);
-            int col = get_grid_col(position);
-            int cell_index = get_grid_index(row, col);
+            int row = getGridRow(position);
+            int col = getGridCol(position);
+            int cellIndex = getGridIndex(row, col);
 
             if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
-                grid[cell_index].push_back(i);
+                grid[cellIndex].push_back(i);
             }
         }
 
@@ -125,7 +125,7 @@ struct Ensemble {
             velocities[i] += 0.5f * accelerations[i] * dt;
         }
 
-        populate_grid();
+        populateGrid();
     }
 
     void collideBorder() {
@@ -206,13 +206,13 @@ struct Ensemble {
         size_t N = activeCells.size();
         #pragma omp parallel for schedule(dynamic)
         for (size_t ci = 0; ci < N; ++ci) {
-            size_t cell_index = activeCells[ci];
+            size_t cellIndex = activeCells[ci];
 
             // recover row/col if you need them
-            int row = cell_index / gridCols;
-            int col = cell_index % gridCols;
+            int row = cellIndex / gridCols;
+            int col = cellIndex % gridCols;
 
-            const auto& cell = grid[cell_index];
+            const auto& cell = grid[cellIndex];
 
             // collisions within the cell
             for (size_t a = 0; a < cell.size(); ++a) {
@@ -227,7 +227,7 @@ struct Ensemble {
                 int ncol = col + dCols[k];
                 if (nrow < 0 || ncol < 0 || nrow >= gridRows || ncol >= gridCols)
                     continue;
-                size_t nidx = get_grid_index(nrow, ncol);
+                size_t nidx = getGridIndex(nrow, ncol);
                 const auto& neighbour = grid[nidx];
                 if (neighbour.empty()) continue;
 
@@ -241,7 +241,7 @@ struct Ensemble {
     }
 
   
-    void set_acceleration(sf::Vector2f a) {
+    void setAcceleration(sf::Vector2f a) {
         std::fill(accelerations.begin(), accelerations.end(), a);
     }
 
