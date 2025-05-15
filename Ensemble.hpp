@@ -23,6 +23,7 @@ struct Ensemble {
 
     std::vector<sf::Vector2f> positions, velocities, accelerations;
     std::vector<std::vector<size_t>> grid;
+    std::vector<size_t> activeCells;
     std::vector<float> radii, masses;
     sf::Color color{64, 164, 223};
     float cellSize;
@@ -95,7 +96,13 @@ struct Ensemble {
             if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
                 grid[cell_index].push_back(i);
             }
+        }
 
+        // build list of non-empty cells
+        activeCells.clear();
+        for (size_t i = 0; i < grid.size(); ++i) {
+            if (!grid[i].empty())
+                activeCells.push_back(i);
         }
     }
 
@@ -193,39 +200,40 @@ struct Ensemble {
 
 
     void collideParticles() {
-        // Forward neighbors only (no duplicates): right, bottom-right, bottom, bottom-left
         const int dRows[] = { 0, 1, 1, 1 };
         const int dCols[] = { 1, 1, 0, -1 };
 
-        #pragma omp parallel for collapse(2) schedule(dynamic)
-        for (int row = 0; row < gridRows; ++row) {
-            for (int col = 0; col < gridCols; ++col) {
-                
-                int cell_index = get_grid_index(row, col);
-                const auto& cell = grid[cell_index];
+        size_t N = activeCells.size();
+        #pragma omp parallel for schedule(dynamic)
+        for (size_t ci = 0; ci < N; ++ci) {
+            size_t cell_index = activeCells[ci];
 
-                // Collisions within the same cell
-                for (size_t i = 0; i < cell.size(); ++i) {
-                    for (size_t j = i + 1; j < cell.size(); ++j) {
-                        handleCollision(cell[i], cell[j]);
-                    }
+            // recover row/col if you need them
+            int row = cell_index / gridCols;
+            int col = cell_index % gridCols;
+
+            const auto& cell = grid[cell_index];
+
+            // collisions within the cell
+            for (size_t a = 0; a < cell.size(); ++a) {
+                for (size_t b = a + 1; b < cell.size(); ++b) {
+                    handleCollision(cell[a], cell[b]);
                 }
+            }
 
+            // collisions with forward neighbors
+            for (int k = 0; k < 4; ++k) {
+                int nrow = row + dRows[k];
+                int ncol = col + dCols[k];
+                if (nrow < 0 || ncol < 0 || nrow >= gridRows || ncol >= gridCols)
+                    continue;
+                size_t nidx = get_grid_index(nrow, ncol);
+                const auto& neighbour = grid[nidx];
+                if (neighbour.empty()) continue;
 
-                for (int k = 0; k < 4; ++k) {
-                    int neighbour_row = row + dRows[k];
-                    int neighbour_col = col + dCols[k];
-
-                    if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols)
-                        continue;
-
-                    int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
-                    const auto& neighbour_cell = grid[neighbour_index];
-
-                    for (auto& i : cell) {
-                        for (auto& j : neighbour_cell) {
-                            handleCollision(i, j);
-                        }
+                for (auto i : cell) {
+                    for (auto j : neighbour) {
+                        handleCollision(i, j);
                     }
                 }
             }
@@ -234,7 +242,6 @@ struct Ensemble {
 
   
     void set_acceleration(sf::Vector2f a) {
-    
         std::fill(accelerations.begin(), accelerations.end(), a);
     }
 
