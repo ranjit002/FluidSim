@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <thread>
-
+#include <random>
 #include "globals.hpp"
 #include <iostream>
 
@@ -22,16 +22,16 @@ inline sf::Vector2f normalize(const sf::Vector2f& v) {
 struct Ensemble {
 
     std::vector<sf::Vector2f> positions, velocities, accelerations;
-    std::vector<float> radii, masses;
     std::vector<std::vector<size_t>> grid;
+    std::vector<float> radii, masses;
     sf::Color color{64, 164, 223};
-    int gridCols, gridRows;
     float cellSize;
+    int gridCols, gridRows;
 
     
-    Ensemble(int num_particles) {
+    Ensemble(int num_particles, float radius) {
 
-        float radius = 3.0f, mass = 1.0f;
+        float mass = 1.0f;
         
         // Reserve memory for particle properties
         positions.reserve(num_particles);
@@ -80,7 +80,7 @@ struct Ensemble {
     }
 
     void clear_grid() {
-        grid.assign(grid.size(), {});
+        for (auto& cell : grid) cell.clear();
     }
 
     void populate_grid() {
@@ -90,7 +90,7 @@ struct Ensemble {
             auto& position = positions[i];
             int row = get_grid_row(position);
             int col = get_grid_col(position);
-            int cell_index = get_grid_index(row, col);
+            int cell_index = get_grid_index(col, row);
 
             if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
                 grid[cell_index].push_back(i);
@@ -102,59 +102,28 @@ struct Ensemble {
     void draw(sf::RenderWindow& window) {
         
         sf::CircleShape shape;
+        shape.setFillColor(color);
 
         for (size_t i = 0; i < positions.size(); ++i) {
             shape.setRadius(radii[i]);
-            shape.setFillColor(color);
             shape.setPosition(positions[i]);
             window.draw(shape);
         }
     }
 
-    void update_range(float dt, size_t start, size_t end) {
-        for (size_t i = start; i < end; ++i) {
+    void update(float dt) {
+        #pragma omp parallel for
+        for (size_t i = 0; i < positions.size(); ++i) {
             positions[i] += velocities[i] * dt + 0.5f * accelerations[i] * dt * dt;
             velocities[i] += 0.5f * accelerations[i] * dt;
-            accelerations[i] = {};
-        }
-    }
-
-    void update(float dt) {
-        size_t num_threads = std::thread::hardware_concurrency();
-        if (num_threads == 0) num_threads = 1;
-
-        size_t total = positions.size();
-        size_t particles_per_thread = total / num_threads;
-        
-        // Fall back to single-thread if too small
-        if (total < 1000 || num_threads == 1) {
-            update_range(dt, 0, total);
-            populate_grid();
-            return;
-        }
-
-        std::vector<std::thread> threads;
-
-        for (size_t i = 0; i < num_threads; ++i) {
-            size_t start = i * particles_per_thread;
-            size_t end = (i == num_threads - 1) ? total : (i + 1) * particles_per_thread;
-
-            threads.emplace_back([this, dt, start, end]() {
-                update_range(dt, start, end);
-            });
-
-        }
-
-        for (auto& thread : threads) {
-            thread.join();
         }
 
         populate_grid();
     }
 
-
     void border_collision() {
 
+        #pragma omp parallel for
         for (size_t i = 0; i < positions.size(); ++i) {
             auto& position = positions[i];
             auto& velocity = velocities[i];
@@ -164,32 +133,36 @@ struct Ensemble {
             // X axis
             if (position.x < radius) {
                 position.x = radius;
-                velocity.x = -velocity.x * (1.f - COLLISION_DAMPING);
+                velocity.x = velocity.x * (COLLISION_DAMPING - 1.f);
             }
             else if (position.x > WINDOW_WIDTH - radius) {
             position.x = WINDOW_WIDTH - radius;
-            velocity.x = -velocity.x * (1.f - COLLISION_DAMPING);
+            velocity.x = velocity.x * (COLLISION_DAMPING - 1.f);
             }
             
             // Y axis
             if (position.y < radius) {
                 position.y = radius;
-                velocity.y = -velocity.y * (1.f - COLLISION_DAMPING);
+                velocity.y = velocity.y * (COLLISION_DAMPING - 1.f);
             }
             else if (position.y > WINDOW_HEIGHT - radius) {
                 position.y = WINDOW_HEIGHT - radius;
-                velocity.y = -velocity.y * (1.f - COLLISION_DAMPING);
+                velocity.y = velocity.y * (COLLISION_DAMPING - 1.f);
             }
         }
     }
         
     void handleCollision(size_t i, size_t j) {
+
         sf::Vector2f& posA = positions[i];
         sf::Vector2f& posB = positions[j];
+
         sf::Vector2f& velA = velocities[i];
         sf::Vector2f& velB = velocities[j];
+        
         float radiusA = radii[i];
         float radiusB = radii[j];
+        
         float massA = masses[i];
         float massB = masses[j];
 
@@ -221,10 +194,11 @@ struct Ensemble {
 
     void collideParticles() {
         // Iterate over cells
-        for (size_t row = 0; row < gridRows; row++) {
-            for (size_t col = 0; col < gridCols; col++) {
+        #pragma omp parallel for collapse(2) schedule(dynamic)
+        for (int row = 0; row < gridRows; ++row) {
+            for (int col = 0; col < gridCols; ++col) {
                 
-                int cell_index = get_grid_index(row, col);
+                int cell_index = get_grid_index(col, row);
                 const auto& cell = grid[cell_index];
 
                 // Iterate over the same cell
@@ -244,7 +218,7 @@ struct Ensemble {
                         // Avoid repeat calculations
                         if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols) continue;
 
-                        int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
+                        int neighbour_index = get_grid_index(neighbour_col, neighbour_row);
                         const auto& neighbour_cell = grid[neighbour_index];
                         
                         for (auto& i : cell) {
