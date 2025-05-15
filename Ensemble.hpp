@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <thread>
 
 #include "globals.hpp"
 #include <iostream>
@@ -110,17 +111,47 @@ struct Ensemble {
         }
     }
 
-    // Verlet integration
-    void update(float dt) {
-
-        for (size_t i = 0; i < positions.size(); ++i) {
+    void update_range(float dt, size_t start, size_t end) {
+        for (size_t i = start; i < end; ++i) {
             positions[i] += velocities[i] * dt + 0.5f * accelerations[i] * dt * dt;
             velocities[i] += 0.5f * accelerations[i] * dt;
-            accelerations[i] = {};  // Reset to zero vector
+            accelerations[i] = {};
+        }
+    }
+
+    void update(float dt) {
+        size_t num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0) num_threads = 1;
+
+        size_t total = positions.size();
+        size_t particles_per_thread = total / num_threads;
+        
+        // Fall back to single-thread if too small
+        if (total < 1000 || num_threads == 1) {
+            update_range(dt, 0, total);
+            populate_grid();
+            return;
+        }
+
+        std::vector<std::thread> threads;
+
+        for (size_t i = 0; i < num_threads; ++i) {
+            size_t start = i * particles_per_thread;
+            size_t end = (i == num_threads - 1) ? total : (i + 1) * particles_per_thread;
+
+            threads.emplace_back([this, dt, start, end]() {
+                update_range(dt, start, end);
+            });
+
+        }
+
+        for (auto& thread : threads) {
+            thread.join();
         }
 
         populate_grid();
     }
+
 
     void border_collision() {
 
@@ -220,7 +251,7 @@ struct Ensemble {
                             for (auto& j : neighbour_cell) {
                                 handleCollision(i, j);
                             }
-                        }       
+                        }
                     }
                 }
             }
