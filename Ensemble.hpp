@@ -208,29 +208,23 @@ struct Ensemble {
                     }
                 }
 
-                // Collisions with neighboring cells (only forward neighbors)
-                for (int drow = -1; drow <= 1; ++drow) {
-                    for (int dcol = -1; dcol <= 1; ++dcol) {
-                        if (drow == 0 && dcol == 0) continue;
+                // Forward neighbors only (no duplicates): right, bottom-right, bottom, bottom-left
+                const int dRows[] = { 0, 1, 1, 1 };
+                const int dCols[] = { 1, 1, 0, -1 };
 
-                        int neighbour_row = row + drow;
-                        int neighbour_col = col + dcol;
+                for (int k = 0; k < 4; ++k) {
+                    int neighbour_row = row + dRows[k];
+                    int neighbour_col = col + dCols[k];
 
-                        // Boundary check
-                        if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols)
-                            continue;
+                    if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols)
+                        continue;
 
-                        // Only process neighbor if it is "after" current cell to avoid duplicates
-                        if (neighbour_row < row || (neighbour_row == row && neighbour_col <= col))
-                            continue;
+                    int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
+                    const auto& neighbour_cell = grid[neighbour_index];
 
-                        int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
-                        const auto& neighbour_cell = grid[neighbour_index];
-
-                        for (auto& i : cell) {
-                            for (auto& j : neighbour_cell) {
-                                handleCollision(i, j);
-                            }
+                    for (auto& i : cell) {
+                        for (auto& j : neighbour_cell) {
+                            handleCollision(i, j);
                         }
                     }
                 }
