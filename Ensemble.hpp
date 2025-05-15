@@ -99,6 +99,7 @@ struct Ensemble {
     }
 
     void draw(sf::RenderWindow& window) {
+        
         sf::CircleShape shape;
 
         for (size_t i = 0; i < positions.size(); ++i) {
@@ -111,6 +112,7 @@ struct Ensemble {
 
     // Verlet integration
     void update(float dt) {
+
         for (size_t i = 0; i < positions.size(); ++i) {
             positions[i] += velocities[i] * dt + 0.5f * accelerations[i] * dt * dt;
             velocities[i] += 0.5f * accelerations[i] * dt;
@@ -120,8 +122,8 @@ struct Ensemble {
         populate_grid();
     }
 
-    void border_collision() 
-    {
+    void border_collision() {
+
         for (size_t i = 0; i < positions.size(); ++i) {
             auto& position = positions[i];
             auto& velocity = velocities[i];
@@ -138,7 +140,6 @@ struct Ensemble {
             velocity.x = -velocity.x * (1.f - COLLISION_DAMPING);
             }
             
-
             // Y axis
             if (position.y < radius) {
                 position.y = radius;
@@ -219,11 +220,9 @@ struct Ensemble {
                             for (auto& j : neighbour_cell) {
                                 handleCollision(i, j);
                             }
-                        }
-                        
+                        }       
                     }
                 }
-                                
             }
         }
     }
