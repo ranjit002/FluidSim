@@ -18,13 +18,13 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int num_particles = 5000;
+    int num_particles = 7000;
     Ensemble ensemble(num_particles);
     
     while (window.isOpen()) {
 
         while (const std::optional event = window.pollEvent()) {
-            
+
             if (event->is<sf::Event::Closed>())
                 window.close();
         }

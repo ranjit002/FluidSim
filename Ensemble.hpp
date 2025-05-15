@@ -22,13 +22,17 @@ struct Ensemble {
 
     std::vector<sf::Vector2f> positions, velocities, accelerations;
     std::vector<float> radii, masses;
+    std::vector<std::vector<size_t>> grid;
     sf::Color color{64, 164, 223};
+    int gridCols, gridRows;
+    float cellSize;
 
     
     Ensemble(int num_particles) {
 
         float radius = 3.0f, mass = 1.0f;
-
+        
+        // Reserve memory for particle properties
         positions.reserve(num_particles);
         velocities.reserve(num_particles);
         accelerations.reserve(num_particles);
@@ -51,11 +55,47 @@ struct Ensemble {
             radii.emplace_back(radius);
             masses.emplace_back(mass);
         }
+
+        // Setup collision grid
+        float max_radius = *std::max_element(radii.begin(), radii.end());
+        cellSize = 2.0f * max_radius;
+        gridCols = static_cast<int>(WINDOW_WIDTH / cellSize) + 1;
+        gridRows = static_cast<int>(WINDOW_HEIGHT / cellSize) + 1;
+        
+        grid.resize(gridCols * gridRows);
+        populate_grid();
     }
 
-    void set_acceleration(sf::Vector2f a) {
+    int get_grid_col(const sf::Vector2f& position) const {
+        return static_cast<int>(position.x / cellSize);
+    }
 
-        std::fill(accelerations.begin(), accelerations.end(), a);
+    int get_grid_row(const sf::Vector2f& position) const {
+        return static_cast<int>(position.y / cellSize);
+    }
+
+    size_t get_grid_index(int col, int row) const {
+        return row * gridCols + col;
+    }
+
+    void clear_grid() {
+        grid.assign(grid.size(), {});
+    }
+
+    void populate_grid() {
+        clear_grid();
+
+        for (size_t i=0; i < positions.size(); i++) {
+            auto& position = positions[i];
+            int row = get_grid_row(position);
+            int col = get_grid_col(position);
+            int cell_index = get_grid_index(row, col);
+
+            if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
+                grid[cell_index].push_back(i);
+            }
+
+        }
     }
 
     void draw(sf::RenderWindow& window) {
@@ -76,6 +116,8 @@ struct Ensemble {
             velocities[i] += 0.5f * accelerations[i] * dt;
             accelerations[i] = {};  // Reset to zero vector
         }
+
+        populate_grid();
     }
 
     void border_collision() 
@@ -146,11 +188,49 @@ struct Ensemble {
 
 
     void collideParticles() {
-        for (size_t i = 0; i < positions.size(); ++i) {
-            for (size_t j = i + 1; j < positions.size(); ++j) {
-                handleCollision(i, j);
+        // Iterate over cells
+        for (size_t row = 0; row < gridRows; row++) {
+            for (size_t col = 0; col < gridCols; col++) {
+                
+                int cell_index = get_grid_index(row, col);
+                const auto& cell = grid[cell_index];
+
+                // Iterate over the same cell
+                for (size_t i = 0; i < cell.size(); i++) {
+                    for (size_t j = i + 1; j < cell.size(); j++) {
+                        handleCollision(cell[i], cell[j]);
+                    }
+                }
+
+                // Iterate over neighouring cells
+                for (int drow = -1; drow <= 1 ; drow++) {
+                    for (int dcol = -1; dcol <= 1 ; dcol++) {
+                        if (drow == 0 && dcol == 0) continue;
+
+                        int neighbour_row = row + drow;
+                        int neighbour_col = col + dcol;
+                        // Avoid repeat calculations
+                        if (neighbour_row < 0 || neighbour_col < 0 || neighbour_row >= gridRows || neighbour_col >= gridCols) continue;
+
+                        int neighbour_index = get_grid_index(neighbour_row, neighbour_col);
+                        const auto& neighbour_cell = grid[neighbour_index];
+                        
+                        for (auto& i : cell) {
+                            for (auto& j : neighbour_cell) {
+                                handleCollision(i, j);
+                            }
+                        }
+                        
+                    }
+                }
+                                
             }
         }
     }
+  
+    void set_acceleration(sf::Vector2f a) {
     
+        std::fill(accelerations.begin(), accelerations.end(), a);
+    }
+
 };
