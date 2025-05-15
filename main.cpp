@@ -17,16 +17,14 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int numParticles = 10000;
+    int numParticles = 20000;
     float radius = 2.0f;
     Ensemble ensemble(numParticles, radius);
     
     ensemble.setAcceleration(GRAVITY);
 
     while (window.isOpen()) {
-
         while (const std::optional event = window.pollEvent()) {
-
             if (event->is<sf::Event::Closed>())
                 window.close();
         }

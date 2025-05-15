@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <thread>
 #include <random>
+#include <omp.h>
 #include "globals.hpp"
 #include <iostream>
 
@@ -29,7 +30,6 @@ struct Ensemble {
     float cellSize;
     int gridCols, gridRows;
 
-    
     Ensemble(int numParticles, float radius) {
 
         float mass = 1.0f;
@@ -198,7 +198,6 @@ struct Ensemble {
         }
     }
 
-
     void collideParticles() {
         const int dRows[] = { 0, 1, 1, 1 };
         const int dCols[] = { 1, 1, 0, -1 };
@@ -240,7 +239,6 @@ struct Ensemble {
         }
     }
 
-  
     void setAcceleration(sf::Vector2f a) {
         std::fill(accelerations.begin(), accelerations.end(), a);
     }
