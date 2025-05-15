@@ -32,7 +32,7 @@ int main() {
         }
         window.clear();
 
-        ensemble.border_collision();
+        ensemble.collideBorder();
         ensemble.collideParticles();
         ensemble.update(DT);
         ensemble.draw(window);

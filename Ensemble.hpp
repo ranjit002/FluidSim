@@ -87,7 +87,7 @@ struct Ensemble {
     void populate_grid() {
         clear_grid();
 
-        for (size_t i=0; i < positions.size(); i++) {
+        for (size_t i = 0; i < positions.size(); i++) {
             auto& position = positions[i];
             int row = get_grid_row(position);
             int col = get_grid_col(position);
@@ -128,7 +128,7 @@ struct Ensemble {
         populate_grid();
     }
 
-    void border_collision() {
+    void collideBorder() {
 
         #pragma omp parallel for
         for (size_t i = 0; i < positions.size(); ++i) {
