@@ -193,6 +193,9 @@ struct Ensemble {
 
 
     void collideParticles() {
+        // Forward neighbors only (no duplicates): right, bottom-right, bottom, bottom-left
+        const int dRows[] = { 0, 1, 1, 1 };
+        const int dCols[] = { 1, 1, 0, -1 };
 
         #pragma omp parallel for collapse(2) schedule(dynamic)
         for (int row = 0; row < gridRows; ++row) {
@@ -208,9 +211,6 @@ struct Ensemble {
                     }
                 }
 
-                // Forward neighbors only (no duplicates): right, bottom-right, bottom, bottom-left
-                const int dRows[] = { 0, 1, 1, 1 };
-                const int dCols[] = { 1, 1, 0, -1 };
 
                 for (int k = 0; k < 4; ++k) {
                     int neighbour_row = row + dRows[k];
