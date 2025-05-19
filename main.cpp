@@ -19,22 +19,34 @@ int main() {
     int numParticles = 10000;
     float radius = 2.0f;
     Ensemble ensemble(numParticles, radius);
-    
     ensemble.setAcceleration(GRAVITY);
+
+    // clocks to measure FPS
+    sf::Clock fpsClock;
+    int frameCount = 0;
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>())
                 window.close();
         }
-        window.clear();
-
+        
         ensemble.collideBorder();
         ensemble.collideParticles();
         ensemble.update(DT);
+        
+        // Draw particles
+        window.clear();
         ensemble.draw(window);
-
         window.display();
+
+        // FPS counting
+        frameCount++;
+        if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {
+            std::cout << "FPS: " << frameCount / fpsClock.getElapsedTime().asSeconds() << "\n";
+            fpsClock.restart();
+            frameCount = 0;
+        }
     }
     
     return 0;
