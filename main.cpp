@@ -1,15 +1,14 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-
-#include "globals.hpp"
-#include "Ensemble.hpp"
+#include "globals.h"
+#include "Ensemble.h"
 
 const int WINDOW_HEIGHT = 800;
 const int WINDOW_WIDTH = 800;
 const int FRAME_RATE = 120;
 const float DT = 1 / (float)FRAME_RATE;
-const float COLLISION_DAMPING = 0.99; // Fractional
-const sf::Vector2f GRAVITY = sf::Vector2f(0, 500);
+const float COLLISION_DAMPING = 0.999; // Fractional
+const sf::Vector2f GRAVITY = sf::Vector2f(0, 700);
 
 
 int main() {
@@ -17,7 +16,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int numParticles = 20000;
+    int numParticles = 10000;
     float radius = 2.0f;
     Ensemble ensemble(numParticles, radius);
     
