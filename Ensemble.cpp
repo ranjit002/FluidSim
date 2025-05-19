@@ -25,7 +25,7 @@ Ensemble::Ensemble(int numParticles, float radius) {
     radii.reserve(numParticles);
     masses.reserve(numParticles);
 
-    // Random setup
+    // Random initial conditions
     std::random_device rd;
     std::mt19937 gen(rd());
 
@@ -35,6 +35,7 @@ Ensemble::Ensemble(int numParticles, float radius) {
     std::uniform_real_distribution<float> distVel(-50.0f, 50.0f);
 
     for (int i = 0; i < numParticles; ++i) {
+
         positions.emplace_back(distPosX(gen), distPosY(gen));
         velocities.emplace_back(distVel(gen), distVel(gen));
         accelerations.emplace_back(0.f, 0.f);  // Initially zero
@@ -45,6 +46,7 @@ Ensemble::Ensemble(int numParticles, float radius) {
     // Setup collision grid
     float maxRadius = *std::max_element(radii.begin(), radii.end());
     cellSize = 2.0f * maxRadius;
+
     gridCols = static_cast<int>(WINDOW_WIDTH / cellSize) + 1;
     gridRows = static_cast<int>(WINDOW_HEIGHT / cellSize) + 1;
     
@@ -70,17 +72,19 @@ void Ensemble::clearGrid() {
 }
 
 void Ensemble::populateGrid() {
+
     clearGrid();
 
     for (size_t i = 0; i < positions.size(); i++) {
+
         auto& position = positions[i];
         int row = getGridRow(position);
         int col = getGridCol(position);
         int cellIndex = getGridIndex(row, col);
 
-        if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
+        if (col >= 0 && col < gridCols && row >= 0 && row < gridRows)
             grid[cellIndex].push_back(i);
-        }
+        
     }
 
     // build list of non-empty cells
@@ -104,6 +108,7 @@ void Ensemble::draw(sf::RenderWindow& window) {
 }
 
 void Ensemble::update(float dt) {
+
     #pragma omp parallel for
     for (size_t i = 0; i < positions.size(); ++i) {
         positions[i] += velocities[i] * dt + 0.5f * accelerations[i] * dt * dt;
@@ -117,6 +122,7 @@ void Ensemble::collideBorder() {
 
     #pragma omp parallel for
     for (size_t i = 0; i < positions.size(); ++i) {
+
         auto& position = positions[i];
         auto& velocity = velocities[i];
         const float& radius = radii[i];
@@ -158,6 +164,7 @@ void Ensemble::handleCollision(size_t i, size_t j) {
     float tolerance = 0.1f;
 
     if (dist > 0.f && dist < minDist + tolerance) {
+
         sf::Vector2f normal = separation / dist;
 
         sf::Vector2f relVel = velB - velA;
@@ -178,46 +185,48 @@ void Ensemble::handleCollision(size_t i, size_t j) {
 }
 
 void Ensemble::collideParticles() {
+
     const int dRows[] = { 0, 1, 1, 1 };
     const int dCols[] = { 1, 1, 0, -1 };
 
-    size_t N = activeCells.size();
     #pragma omp parallel for schedule(dynamic)
-    for (size_t ci = 0; ci < N; ++ci) {
+    for (size_t ci = 0; ci < activeCells.size(); ++ci) {
         size_t cellIndex = activeCells[ci];
 
-        // recover row/col if you need them
+        // Current cell position
         int row = cellIndex / gridCols;
         int col = cellIndex % gridCols;
 
         const auto& cell = grid[cellIndex];
 
-        // collisions within the cell
-        for (size_t a = 0; a < cell.size(); ++a) {
-            for (size_t b = a + 1; b < cell.size(); ++b) {
+        // Collisions within the cell
+        for (size_t a = 0; a < cell.size(); ++a)
+            for (size_t b = a + 1; b < cell.size(); ++b) 
                 handleCollision(cell[a], cell[b]);
-            }
-        }
 
-        // collisions with forward neighbors
+
+        // Collisions with forward neighbouring cells
         for (int k = 0; k < 4; ++k) {
             int nrow = row + dRows[k];
             int ncol = col + dCols[k];
-            if (nrow < 0 || ncol < 0 || nrow >= gridRows || ncol >= gridCols)
-                continue;
+            
+            // Handle edge cases
+            if (nrow < 0 || ncol < 0 || nrow >= gridRows || ncol >= gridCols) continue;
+
             size_t nidx = getGridIndex(nrow, ncol);
             const auto& neighbour = grid[nidx];
+
             if (neighbour.empty()) continue;
 
-            for (auto i : cell) {
-                for (auto j : neighbour) {
+            for (auto i : cell) 
+                for (auto j : neighbour)
                     handleCollision(i, j);
-                }
-            }
+            
         }
     }
 }
 
 void Ensemble::setAcceleration(sf::Vector2f a) {
+
     std::fill(accelerations.begin(), accelerations.end(), a);
 }
