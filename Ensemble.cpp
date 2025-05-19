@@ -68,12 +68,15 @@ inline size_t Ensemble::getGridIndex(int row, int col) const {
 }
 
 void Ensemble::clearGrid() {
-    for (auto& cell : grid) cell.clear();
+    #pragma omp parallel for
+    for (size_t i = 0; i < activeCells.size(); ++i)
+        grid[activeCells[i]].clear();
 }
 
 void Ensemble::populateGrid() {
 
     clearGrid();
+    activeCells.clear();
 
     for (size_t i = 0; i < positions.size(); i++) {
 
@@ -84,11 +87,9 @@ void Ensemble::populateGrid() {
 
         if (col >= 0 && col < gridCols && row >= 0 && row < gridRows)
             grid[cellIndex].push_back(i);
-        
     }
 
     // build list of non-empty cells
-    activeCells.clear();
     for (size_t i = 0; i < grid.size(); ++i) {
         if (!grid[i].empty())
             activeCells.push_back(i);
@@ -227,6 +228,5 @@ void Ensemble::collideParticles() {
 }
 
 void Ensemble::setAcceleration(sf::Vector2f a) {
-
     std::fill(accelerations.begin(), accelerations.end(), a);
 }
