@@ -131,7 +131,7 @@ void Ensemble::collideBorder() {
             else {
                 position.x = WINDOW_WIDTH - radius;
             }
-            velocity.x = velocity.x * (COLLISION_DAMPING - 1.f);
+            velocity.x *= (COLLISION_DAMPING - 1.f);
         }
         
         
@@ -144,7 +144,7 @@ void Ensemble::collideBorder() {
             else {
                 position.y = WINDOW_HEIGHT - radius;
             }
-            velocity.y = velocity.y * (COLLISION_DAMPING - 1.f);
+            velocity.y *= (COLLISION_DAMPING - 1.f);
         }
         
     }
