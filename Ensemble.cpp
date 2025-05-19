@@ -53,15 +53,15 @@ Ensemble::Ensemble(int numParticles, float radius) {
 }
 
 
-int Ensemble::getGridCol(const sf::Vector2f& position) const {
+inline int Ensemble::getGridCol(const sf::Vector2f& position) const {
     return static_cast<int>(position.x / cellSize);
 }
 
-int Ensemble::getGridRow(const sf::Vector2f& position) const {
+inline int Ensemble::getGridRow(const sf::Vector2f& position) const {
     return static_cast<int>(position.y / cellSize);
 }
 
-size_t Ensemble::getGridIndex(int row, int col) const {
+inline size_t Ensemble::getGridIndex(int row, int col) const {
     return row * gridCols + col;
 }
 

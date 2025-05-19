@@ -22,11 +22,11 @@ struct Ensemble {
 
     Ensemble(int numParticles, float radius);
 
-    int getGridCol(const sf::Vector2f& position) const;
+    inline int getGridCol(const sf::Vector2f& position) const;
 
-    int getGridRow(const sf::Vector2f& position) const;
+    inline int getGridRow(const sf::Vector2f& position) const;
 
-    size_t getGridIndex(int row, int col) const;
+    inline size_t getGridIndex(int row, int col) const;
 
     void clearGrid();
 
