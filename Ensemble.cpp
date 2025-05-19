@@ -123,24 +123,30 @@ void Ensemble::collideBorder() {
 
 
         // X axis
-        if (position.x < radius) {
-            position.x = radius;
+        if (position.x < radius || position.x > WINDOW_WIDTH - radius)
+        {
+            if (position.x < radius) {
+                position.x = radius;
+            }
+            else {
+                position.x = WINDOW_WIDTH - radius;
+            }
             velocity.x = velocity.x * (COLLISION_DAMPING - 1.f);
         }
-        else if (position.x > WINDOW_WIDTH - radius) {
-        position.x = WINDOW_WIDTH - radius;
-        velocity.x = velocity.x * (COLLISION_DAMPING - 1.f);
-        }
+        
         
         // Y axis
-        if (position.y < radius) {
-            position.y = radius;
+        if (position.y < radius || position.y > WINDOW_HEIGHT - radius)
+        {
+            if (position.y < radius) {
+                position.y = radius;
+            }
+            else {
+                position.y = WINDOW_HEIGHT - radius;
+            }
             velocity.y = velocity.y * (COLLISION_DAMPING - 1.f);
         }
-        else if (position.y > WINDOW_HEIGHT - radius) {
-            position.y = WINDOW_HEIGHT - radius;
-            velocity.y = velocity.y * (COLLISION_DAMPING - 1.f);
-        }
+        
     }
 }
 
