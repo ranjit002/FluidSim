@@ -126,21 +126,20 @@ void Ensemble::collideBorder() {
     for (size_t i = 0; i < positions.size(); ++i) {
 
         auto& position = positions[i];
-        auto& velocity = velocities[i];
         const float& radius = radii[i];
-
+        
         // X axis
         if (position.x < radius || position.x > WINDOW_WIDTH - radius)
         {
             position.x = (position.x < radius) ? radius : (WINDOW_WIDTH - radius);
-            velocity.x *= (COLLISION_DAMPING - 1.f);
+            velocities[i].x *= (COLLISION_DAMPING - 1.f);
         }
         
         // Y axis
         if (position.y < radius || position.y > WINDOW_HEIGHT - radius)
         {
             position.y = (position.y < radius) ? radius : (WINDOW_HEIGHT - radius);
-            velocity.y *= (COLLISION_DAMPING - 1.f);
+            velocities[i].y *= (COLLISION_DAMPING - 1.f);
         }
         
     }
@@ -150,15 +149,9 @@ void Ensemble::handleCollision(size_t i, size_t j) {
 
     sf::Vector2f& posA = positions[i];
     sf::Vector2f& posB = positions[j];
-
-    sf::Vector2f& velA = velocities[i];
-    sf::Vector2f& velB = velocities[j];
     
     float radiusA = radii[i];
     float radiusB = radii[j];
-    
-    float massA = masses[i];
-    float massB = masses[j];
 
     sf::Vector2f separation = posB - posA;
     float dist = length(separation);
@@ -167,12 +160,18 @@ void Ensemble::handleCollision(size_t i, size_t j) {
 
     if (dist > 0.f && dist < minDist + tolerance) {
 
+        sf::Vector2f& velA = velocities[i];
+        sf::Vector2f& velB = velocities[j];
+        
         sf::Vector2f normal = separation / dist;
-
+        
         sf::Vector2f relVel = velB - velA;
         float velAlongNormal = dot(relVel, normal);
-
+        
         if (velAlongNormal > 0.f) return;
+        
+        float massA = masses[i];
+        float massB = masses[j];
 
         float impulseMag = (2.f * velAlongNormal) / (massA + massB);
         sf::Vector2f impulse = normal * impulseMag;
