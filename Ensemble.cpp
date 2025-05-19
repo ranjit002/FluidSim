@@ -83,10 +83,11 @@ void Ensemble::populateGrid() {
         auto& position = positions[i];
         int row = getGridRow(position);
         int col = getGridCol(position);
-        int cellIndex = getGridIndex(row, col);
+        
+        if (col < 0 || col >= gridCols || row < 0 || row >= gridRows) continue;
 
-        if (col >= 0 && col < gridCols && row >= 0 && row < gridRows)
-            grid[cellIndex].push_back(i);
+        int cellIndex = getGridIndex(row, col);
+        grid[cellIndex].push_back(i);
     }
 
     // build list of non-empty cells
