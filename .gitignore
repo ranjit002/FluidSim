@@ -2,3 +2,9 @@
 main.dSYM
 .DS_Store
 main
+
+
+build/
+
+CMakeCache.txt
+Makefile
