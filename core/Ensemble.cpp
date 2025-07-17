@@ -7,9 +7,11 @@
 #include "Utility.h"
 
 Ensemble::Ensemble(int numParticles, float radius)
+    : cellSize(0.0f),
+      collisionGrid(WINDOW_WIDTH,
+          WINDOW_HEIGHT,
+          1.0f)  // temp init, will set below
 {
-    float mass = 1.0f;
-
     positions.reserve(numParticles);
     velocities.reserve(numParticles);
     accelerations.reserve(numParticles);
@@ -27,50 +29,10 @@ Ensemble::Ensemble(int numParticles, float radius)
     float maxRadius = *std::max_element(radii.begin(), radii.end());
     cellSize = 2.0f * maxRadius;
 
-    gridCols = static_cast<int>(WINDOW_WIDTH / cellSize) + 1;
-    gridRows = static_cast<int>(WINDOW_HEIGHT / cellSize) + 1;
+    // Reinitialize collision grid with correct cell size
+    collisionGrid = CollisionGrid(WINDOW_WIDTH, WINDOW_HEIGHT, cellSize);
 
-    grid.resize(gridCols * gridRows);
-    populateGrid();
-}
-
-int Ensemble::getGridCol(const sf::Vector2f& position) const
-{
-    return static_cast<int>(position.x / cellSize);
-}
-int Ensemble::getGridRow(const sf::Vector2f& position) const
-{
-    return static_cast<int>(position.y / cellSize);
-}
-size_t Ensemble::getGridIndex(int row, int col) const
-{
-    return row * gridCols + col;
-}
-
-void Ensemble::clearGrid()
-{
-#pragma omp parallel for
-    for (size_t i = 0; i < activeCells.size(); ++i)
-        grid[activeCells[i]].clear();
-}
-
-void Ensemble::populateGrid()
-{
-    clearGrid();
-    activeCells.clear();
-
-    for (size_t i = 0; i < positions.size(); ++i)
-    {
-        int row = getGridRow(positions[i]);
-        int col = getGridCol(positions[i]);
-        if (col < 0 || col >= gridCols || row < 0 || row >= gridRows)
-            continue;
-        size_t idx = getGridIndex(row, col);
-        grid[idx].push_back(i);
-    }
-    for (size_t i = 0; i < grid.size(); ++i)
-        if (!grid[i].empty())
-            activeCells.push_back(i);
+    collisionGrid.populate(positions);
 }
 
 void Ensemble::update(float dt)
@@ -81,7 +43,7 @@ void Ensemble::update(float dt)
         positions[i] += velocities[i] * dt + 0.5f * accelerations[i] * dt * dt;
         velocities[i] += 0.5f * accelerations[i] * dt;
     }
-    populateGrid();
+    collisionGrid.populate(positions);
 }
 
 void Ensemble::collideBorder()
@@ -136,19 +98,34 @@ void Ensemble::collideParticles()
 {
     const int dr[] = {0, 1, 1, 1};
     const int dc[] = {1, 1, 0, -1};
+
+    const auto& activeCells = collisionGrid.getActiveCells();
+
 #pragma omp parallel for schedule(dynamic)
     for (size_t ci = 0; ci < activeCells.size(); ++ci)
     {
         int idx = activeCells[ci];
-        int row = idx / gridCols;
-        int col = idx % gridCols;
-        const auto& cell = grid[idx];
+        int row = idx / collisionGrid.getGridCols();
+        int col = idx % collisionGrid.getGridCols();
+        const auto& cell = collisionGrid.getCell(idx);
+
+        // Collisions within the same cell
         for (size_t a = 0; a < cell.size(); ++a)
             for (size_t b = a + 1; b < cell.size(); ++b)
                 handleCollision(cell[a], cell[b]);
+
+        // Collisions with forward neighboring cells
         for (int k = 0; k < 4; ++k)
         {
-            const auto& neigh = grid[getGridIndex(row + dr[k], col + dc[k])];
+            int nrow = row + dr[k];
+            int ncol = col + dc[k];
+
+            if (nrow < 0 || ncol < 0 || nrow >= collisionGrid.getGridRows() ||
+                ncol >= collisionGrid.getGridCols())
+                continue;
+
+            const auto& neigh =
+                collisionGrid.getCell(collisionGrid.getGridIndex(nrow, ncol));
 
             for (auto i : cell)
                 for (auto j : neigh) handleCollision(i, j);

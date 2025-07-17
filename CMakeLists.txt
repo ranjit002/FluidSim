@@ -23,6 +23,7 @@ add_executable(my_project
     main.cpp
     core/Ensemble.cpp
     core/Initialiser.cpp
+    core/CollisionGrid.cpp
 )
 
 # Includes

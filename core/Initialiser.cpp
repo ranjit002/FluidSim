@@ -2,7 +2,7 @@
 
 #include <random>
 
-#include "globals.h"
+#include "Globals.h"
 
 void initialiseParticles(int numParticles,
     float radius,

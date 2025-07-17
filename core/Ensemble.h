@@ -1,8 +1,9 @@
-// Ensemble.h
 #pragma once
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+
+#include "CollisionGrid.h"
 
 class Ensemble
 {
@@ -17,17 +18,9 @@ class Ensemble
    private:
     std::vector<sf::Vector2f> positions, velocities, accelerations;
     std::vector<float> radii, masses;
-    std::vector<std::vector<size_t>> grid;
-    std::vector<size_t> activeCells;
-
+    CollisionGrid collisionGrid;
     float cellSize;
-    int gridRows, gridCols;
     sf::Color color = sf::Color::White;
 
-    void populateGrid();
-    void clearGrid();
     void handleCollision(size_t i, size_t j);
-    int getGridRow(const sf::Vector2f& pos) const;
-    int getGridCol(const sf::Vector2f& pos) const;
-    size_t getGridIndex(int row, int col) const;
 };
