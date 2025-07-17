@@ -1,3 +1,4 @@
+// Globals.h
 #include <SFML/Graphics.hpp>
 
 extern const int WINDOW_HEIGHT;

@@ -1,10 +1,10 @@
 .vscode
 main.dSYM
+
 .DS_Store
-main
-
-
+.clang-format
 build/
+.cache/
 
 CMakeCache.txt
 Makefile
