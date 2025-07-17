@@ -17,6 +17,7 @@ Ensemble::Ensemble(int numParticles, float radius)
     accelerations.reserve(numParticles);
     radii.reserve(numParticles);
     masses.reserve(numParticles);
+    colors.reserve(numParticles);
 
     initialiseParticles(numParticles,
         radius,
@@ -24,7 +25,8 @@ Ensemble::Ensemble(int numParticles, float radius)
         velocities,
         accelerations,
         radii,
-        masses);
+        masses,
+        colors);
 
     float maxRadius = *std::max_element(radii.begin(), radii.end());
     cellSize = 2.0f * maxRadius;
@@ -88,7 +90,7 @@ void Ensemble::handleCollision(size_t i, size_t j)
         sf::Vector2f imp = normal * jmag;
         velocities[i] += imp * (1.f / mA);
         velocities[j] -= imp * (1.f / mB);
-        sf::Vector2f corr = normal * ((minDist - dist) * 0.5f);
+        sf::Vector2f corr = normal * ((minDist - dist) * 0.7f);
         positions[i] -= corr;
         positions[j] += corr;
     }
@@ -136,11 +138,11 @@ void Ensemble::collideParticles()
 void Ensemble::draw(sf::RenderWindow& window)
 {
     sf::CircleShape shape;
-    shape.setFillColor(color);
     for (size_t i = 0; i < positions.size(); ++i)
     {
         shape.setRadius(radii[i]);
         shape.setPosition(positions[i]);
+        shape.setFillColor(colors[i]);
         window.draw(shape);
     }
 }

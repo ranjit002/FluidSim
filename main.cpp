@@ -8,7 +8,7 @@ const int WINDOW_HEIGHT = 800;
 const int WINDOW_WIDTH = 800;
 const int FRAME_RATE = 120;
 const float DT = 1 / (float)FRAME_RATE;
-const float COLLISION_DAMPING = 0.999;
+const float COLLISION_DAMPING = 0.8;
 const sf::Vector2f GRAVITY = sf::Vector2f(0, 700);
 
 int main()
@@ -17,8 +17,8 @@ int main()
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Fluid Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int numParticles = 10000;
-    float radius = 2.0f;
+    int numParticles = 10;
+    float radius = 5.0f;
     Ensemble ensemble(numParticles, radius);
     ensemble.setAcceleration(GRAVITY);
 

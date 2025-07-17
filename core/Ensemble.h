@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "CollisionGrid.h"
+#include "SFML/Graphics/Color.hpp"
 
 class Ensemble
 {
@@ -18,9 +19,9 @@ class Ensemble
    private:
     std::vector<sf::Vector2f> positions, velocities, accelerations;
     std::vector<float> radii, masses;
+    std::vector<sf::Color> colors;
     CollisionGrid collisionGrid;
     float cellSize;
-    sf::Color color = sf::Color::White;
 
     void handleCollision(size_t i, size_t j);
 };
