@@ -55,16 +55,20 @@ void Ensemble::collideBorder()
     {
         auto& p = positions[i];
         auto& v = velocities[i];
+
         float r = radii[i];
-        if (p.x < r || p.x > WINDOW_WIDTH - r)
+
+        if (p.x < 2 * r || p.x > WINDOW_WIDTH - 2 * r)
         {
-            p.x = std::clamp(p.x, r, WINDOW_WIDTH - r);
+            p.x = std::clamp(p.x, 2.f * r, WINDOW_WIDTH - 2.f * r);
             v.x *= (COLLISION_DAMPING - 1.f);
+            v.y *= 0.99;
         }
-        if (p.y < r || p.y > WINDOW_HEIGHT - r)
+        if (p.y < 2 * r || p.y > WINDOW_HEIGHT - 2 * r)
         {
-            p.y = std::clamp(p.y, r, WINDOW_HEIGHT - r);
+            p.y = std::clamp(p.y, 2.f * r, WINDOW_HEIGHT - 2.f * r);
             v.y *= (COLLISION_DAMPING - 1.f);
+            v.x *= 0.99;
         }
     }
 }
