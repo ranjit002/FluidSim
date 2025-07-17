@@ -58,12 +58,15 @@ void Ensemble::collideBorder()
 
         float r = radii[i];
 
+        // Left/Right Walls
         if (p.x < 2 * r || p.x > WINDOW_WIDTH - 2 * r)
         {
             p.x = std::clamp(p.x, 2.f * r, WINDOW_WIDTH - 2.f * r);
             v.x *= (COLLISION_DAMPING - 1.f);
             v.y *= 0.99;
         }
+
+        // Floor/Ceiling
         if (p.y < 2 * r || p.y > WINDOW_HEIGHT - 2 * r)
         {
             p.y = std::clamp(p.y, 2.f * r, WINDOW_HEIGHT - 2.f * r);
@@ -77,24 +80,36 @@ void Ensemble::handleCollision(size_t i, size_t j)
 {
     auto& posA = positions[i];
     auto& posB = positions[j];
+
     float rA = radii[i], rB = radii[j];
     float mA = masses[i], mB = masses[j];
+
     sf::Vector2f delta = posB - posA;
+
     float dist = length(delta);
     float minDist = rA + rB;
+
     const float tol = 0.1f;
+
     if (dist > 0.f && dist < minDist + tol)
     {
         sf::Vector2f normal = delta / dist;
         sf::Vector2f rel = velocities[j] - velocities[i];
+
         float vn = dot(rel, normal);
+
         if (vn > 0)
             return;
+
         float jmag = (2.f * vn) / (mA + mB);
+
         sf::Vector2f imp = normal * jmag;
+
         velocities[i] += imp * (1.f / mA);
         velocities[j] -= imp * (1.f / mB);
+
         sf::Vector2f corr = normal * ((minDist - dist) * 0.7f);
+
         positions[i] -= corr;
         positions[j] += corr;
     }
@@ -111,8 +126,10 @@ void Ensemble::collideParticles()
     for (size_t ci = 0; ci < activeCells.size(); ++ci)
     {
         int idx = activeCells[ci];
+
         int row = idx / collisionGrid.getGridCols();
         int col = idx % collisionGrid.getGridCols();
+
         const auto& cell = collisionGrid.getCell(idx);
 
         // Collisions within the same cell
