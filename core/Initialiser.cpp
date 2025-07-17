@@ -14,7 +14,7 @@ void initialiseParticles(int numParticles,
 {
     float mass = 1.0f;
     std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 rng(rd());
 
     float w = 5.0f;
     std::uniform_real_distribution<float> distPosX(
@@ -25,8 +25,8 @@ void initialiseParticles(int numParticles,
 
     for (int i = 0; i < numParticles; ++i)
     {
-        positions.emplace_back(distPosX(gen), distPosY(gen));
-        velocities.emplace_back(distVel(gen), distVel(gen));
+        positions.emplace_back(distPosX(rng), distPosY(rng));
+        velocities.emplace_back(distVel(rng), distVel(rng));
         accelerations.emplace_back(0.f, 0.f);
         radii.emplace_back(radius);
         masses.emplace_back(mass);
