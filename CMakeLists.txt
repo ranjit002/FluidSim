@@ -22,25 +22,25 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 
 # Executable
-add_executable(my_project
+add_executable(fluidsim
     main.cpp
-    core/Ensemble.cpp
-    core/Initialiser.cpp
-    core/CollisionGrid.cpp
+    src/Ensemble.cpp
+    src/Initialiser.cpp
+    src/CollisionGrid.cpp
 )
 
 # Includes
-target_include_directories(my_project PRIVATE
-    ${CMAKE_SOURCE_DIR}/core
+target_include_directories(fluidsim PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
     /opt/homebrew/Cellar/sfml/3.0.1/include
 )
 
 # Link SFML manually
-target_link_directories(my_project PRIVATE
+target_link_directories(fluidsim PRIVATE
     /opt/homebrew/Cellar/sfml/3.0.1/lib
 )
 
-target_link_libraries(my_project
+target_link_libraries(fluidsim
     sfml-graphics
     sfml-window
     sfml-system

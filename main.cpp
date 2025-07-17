@@ -1,8 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
-#include "core/Ensemble.h"
-#include "core/Globals.h"
+#include "src/Ensemble.h"
+#include "src/Globals.h"
 
 const int WINDOW_HEIGHT = 800;
 const int WINDOW_WIDTH = 800;
@@ -18,7 +18,7 @@ int main()
     window.setFramerateLimit(FRAME_RATE);
 
     int numParticles = 10000;
-    float radius = 2.0f;
+    float radius = 2.f;
     Ensemble ensemble(numParticles, radius);
     ensemble.setAcceleration(GRAVITY);
 
@@ -31,9 +31,15 @@ int main()
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-        ensemble.collideBorder();
-        ensemble.collideParticles();
-        ensemble.update(DT);
+        int subsamples = 4;
+        float subDT = DT / subsamples;
+
+        for (size_t i = 0; i < subsamples; ++i)
+        {
+            ensemble.collideBorder();
+            ensemble.collideParticles();
+            ensemble.update(subDT);
+        }
 
         window.clear();
         ensemble.draw(window);
