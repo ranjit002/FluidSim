@@ -108,7 +108,7 @@ void Ensemble::handleCollision(size_t i, size_t j)
         velocities[i] += imp * (1.f / mA);
         velocities[j] -= imp * (1.f / mB);
 
-        sf::Vector2f corr = normal * ((minDist - dist) * 0.7f);
+        sf::Vector2f corr = normal * ((minDist - dist) * 0.5f);
 
         positions[i] -= corr;
         positions[j] += corr;

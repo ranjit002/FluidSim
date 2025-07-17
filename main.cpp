@@ -17,8 +17,8 @@ int main()
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Fluid Simulation");
     window.setFramerateLimit(FRAME_RATE);
 
-    int numParticles = 10;
-    float radius = 5.0f;
+    int numParticles = 10000;
+    float radius = 2.0f;
     Ensemble ensemble(numParticles, radius);
     ensemble.setAcceleration(GRAVITY);
 
